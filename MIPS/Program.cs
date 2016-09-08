@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace arc
+namespace MIPS
 {
     class Program
     {
@@ -43,14 +43,18 @@ namespace arc
                     case "MATH_LOG":
                         switch (name)
                         {
-                            case "rs": rs = BinToDec(binary.Substring(k, size));
+                            case "rs":
+                                rs = BinToDec(binary.Substring(k, size));
                                 break;
-                            case "rt": rt = BinToDec(binary.Substring(k, size));
+                            case "rt":
+                                rt = BinToDec(binary.Substring(k, size));
                                 break;
-                            case "rd": rd = BinToDec(binary.Substring(k, size)); 
+                            case "rd":
+                                rd = BinToDec(binary.Substring(k, size));
                                 break;
                             case "sh": break;
-                            case "fn": fn = R_FN[BinToDec(binary.Substring(k, size))];
+                            case "fn":
+                                fn = R_FN[BinToDec(binary.Substring(k, size))];
                                 break;
                         }
 
@@ -60,11 +64,14 @@ namespace arc
                     case "BNE":
                         switch (name)
                         {
-                            case "rs": rs = BinToDec(binary.Substring(k, size));
+                            case "rs":
+                                rs = BinToDec(binary.Substring(k, size));
                                 break;
-                            case "rt": rt = BinToDec(binary.Substring(k, size));
+                            case "rt":
+                                rt = BinToDec(binary.Substring(k, size));
                                 break;
-                            case "L": l = BinToDec(binary.Substring(k, size));
+                            case "L":
+                                l = BinToDec(binary.Substring(k, size));
                                 break;
                         }
 
@@ -72,7 +79,8 @@ namespace arc
                     case "J":
                         switch (name)
                         {
-                            case "L": l = BinToDec(binary.Substring(k, size));
+                            case "L":
+                                l = BinToDec(binary.Substring(k, size));
                                 break;
                         }
 
@@ -80,11 +88,14 @@ namespace arc
                     default:
                         switch (name)
                         {
-                            case "rs": rs = BinToDec(binary.Substring(k, size));
+                            case "rs":
+                                rs = BinToDec(binary.Substring(k, size));
                                 break;
-                            case "rt": rt = BinToDec(binary.Substring(k, size));
+                            case "rt":
+                                rt = BinToDec(binary.Substring(k, size));
                                 break;
-                            case "IMM": imm = BinToDec(binary.Substring(k, size));
+                            case "IMM":
+                                imm = BinToDec(binary.Substring(k, size));
                                 break;
                         }
 
@@ -134,10 +145,10 @@ namespace arc
             OP_FUNCTIONS.Add(35, "LW");         // LW
             OP_FUNCTIONS.Add(43, "SW");         // SW
 
-            var MATH_LOG_SIZES  = new Dictionary<string, int>() { { "rs", 5 }, { "rt", 5 }, { "rd", 5 }, { "sh", 5 }, { "fn", 6 } };
-            var BLTZ_BEQ_BNE    = new Dictionary<string, int>() { { "rs", 5 }, { "rt", 5 }, { "L", 16 } };
-            var J               = new Dictionary<string, int>() { { "L", 16 } };
-            var IMM             = new Dictionary<string, int>() { { "rs", 5 }, { "rt", 5 }, { "IMM", 16 } };
+            var MATH_LOG_SIZES = new Dictionary<string, int>() { { "rs", 5 }, { "rt", 5 }, { "rd", 5 }, { "sh", 5 }, { "fn", 6 } };
+            var BLTZ_BEQ_BNE = new Dictionary<string, int>() { { "rs", 5 }, { "rt", 5 }, { "L", 16 } };
+            var J = new Dictionary<string, int>() { { "L", 16 } };
+            var IMM = new Dictionary<string, int>() { { "rs", 5 }, { "rt", 5 }, { "IMM", 16 } };
 
             SIZES.Add("MATH_LOG", MATH_LOG_SIZES);
             SIZES.Add("BLTZ", BLTZ_BEQ_BNE);
