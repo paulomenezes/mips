@@ -18,20 +18,43 @@ namespace MIPS
         {
             StartDict();
 
-            string input = "02114020";
+            string[] input = System.IO.File.ReadAllLines("../../entrada.txt");
+            string output = String.Empty;
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                string _out = Decode(input[i]);
+                Console.WriteLine(_out);
+
+                output += _out + "\n";
+            }
+
+            System.IO.StreamWriter file = new System.IO.StreamWriter("../../saida_2.txt");
+            file.WriteLine(output);
+            file.Close();
+
+            Console.ReadKey();
+        }
+
+        static string Decode(string input)
+        {
             string binary = HexToBin(input);
 
             string op = binary.Substring(0, OP_INDEX);
-            string label = OP_FUNCTIONS[BinToDec(op)];
+            int xxx = BinToDec(op);
+            string label = OP_FUNCTIONS[xxx];
 
             int rs = 0;
             int rt = 0;
             int rd = 0;
-            int l = 0;
+            int sh = 0;
+            string l = String.Empty;
             int imm = 0;
             string fn = String.Empty;
 
-            Dictionary<string, int> funcs = SIZES[OP_FUNCTIONS[BinToDec(op)]];
+            int x = BinToDec(op);
+            string op_name = OP_FUNCTIONS[x];
+            Dictionary<string, int> funcs = SIZES[op_name];
             int k = OP_INDEX;
             for (int i = 0; i < funcs.Keys.Count; i++)
             {
@@ -52,16 +75,18 @@ namespace MIPS
                             case "rd":
                                 rd = BinToDec(binary.Substring(k, size));
                                 break;
-                            case "sh": break;
+                            case "sh":
+                                sh = BinToDec(binary.Substring(k, size));
+                                break;
                             case "fn":
-                                fn = R_FN[BinToDec(binary.Substring(k, size))];
+                                fn = R_FN[BinToDec(binary.Substring(k, size))]; 
                                 break;
                         }
 
                         break;
-                    case "BLTZ":
-                    case "BEQ":
-                    case "BNE":
+                    case "bltz":
+                    case "beq":
+                    case "bne":
                         switch (name)
                         {
                             case "rs":
@@ -71,16 +96,28 @@ namespace MIPS
                                 rt = BinToDec(binary.Substring(k, size));
                                 break;
                             case "L":
-                                l = BinToDec(binary.Substring(k, size));
+                                l = binary.Substring(k, size);
                                 break;
                         }
 
                         break;
-                    case "J":
+                    case "lui":
+                        switch (name)
+                        {
+                            case "rt":
+                                rt = BinToDec(binary.Substring(k, size));
+                                break;
+                            case "IMM":
+                                imm = BinToDec(binary.Substring(k, size));
+                                break;
+                        }
+
+                        break;
+                    case "j":
                         switch (name)
                         {
                             case "L":
-                                l = BinToDec(binary.Substring(k, size));
+                                l = binary.Substring(k, size);
                                 break;
                         }
 
@@ -105,80 +142,152 @@ namespace MIPS
                 k += size;
             }
 
+            string output = String.Empty;
+
+            fn = String.IsNullOrEmpty(fn) ? op_name : fn;
+
             switch (label)
             {
                 case "MATH_LOG":
-                    Console.WriteLine("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                    switch (fn)
+                    {
+                        case "mfhi":
+                        case "mflo":
+                            output = String.Format("{0} ${1}", fn, rd);
+                            break;
+                        case "mult":
+                        case "multu":
+                        case "div":
+                        case "divu":
+                            output = String.Format("{0} ${1}, ${2}", fn, rs, rt);
+                            break;
+                        case "jr":
+                            output = String.Format("{0} ${1}", fn, rs);
+                            break;
+                        case "sll":
+                        case "srl":
+                        case "sra":
+                            output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rt, sh);
+                            break;
+                        case "sllv":
+                            output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rt, rs);
+                            break;
+                        case "srlv":
+                        case "srav":
+                            output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rt, rs);
+                            break;
+                        case "syscall":
+                            output = String.Format("{0}", fn);
+                            break;
+                        default:
+                            output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                            break;
+                    }
                     break;
-                case "BLTZ":
-                case "BEQ":
-                case "BNE":
-                    Console.WriteLine("{0} ${1}, ${2}, ${3}", fn, rs, rt, l);
+                case "bltz":
+                case "beq":
+                case "bne":
+                    output = String.Format("{0} ${1}, ${2}, ${3}", fn, rs, rt, l);
                     break;
-                case "J":
-                    Console.WriteLine("{0} ${1}", fn, l);
+                case "j":
+                    output = String.Format("{0} ${1}", fn, l);
+                    break;
+                case "lui":
+                    output = String.Format("{0} ${1}, {2}", op_name, rt, imm);
                     break;
                 default:
-                    if (label.Equals("LW") || label.Equals("SW"))
-                        Console.WriteLine("{0} ${1}, ${2}(${3})", fn, rt, imm, rs);
+                    if (label.Equals("lw") || label.Equals("sw") ||
+                        label.Equals("lb") || label.Equals("lbu") || label.Equals("sb"))
+                        output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
                     else
-                        Console.WriteLine("{0} ${1}, ${2}, ${3}", fn, rt, rs, imm);
+                        output = String.Format("{0} ${1}, ${2}, {3}", fn, rt, rs, imm);
                     break;
             }
 
-            Console.ReadKey();
+            return output;
         }
 
         static void StartDict()
         {
             OP_FUNCTIONS.Add(0, "MATH_LOG");    // JR, ADD, SUB, SLT, AND, OR, XOR, NOR
-            OP_FUNCTIONS.Add(1, "BLTZ");        // BLTZ
-            OP_FUNCTIONS.Add(2, "J");           // J
-            OP_FUNCTIONS.Add(4, "BEQ");         // BEQ
-            OP_FUNCTIONS.Add(5, "BNE");         // BNE
-            OP_FUNCTIONS.Add(8, "MATH_01");     // ADDI
-            OP_FUNCTIONS.Add(10, "MATH_02");    // SLTI
-            OP_FUNCTIONS.Add(12, "ANDI");       // ANDI
-            OP_FUNCTIONS.Add(13, "ORI");        // ORI
-            OP_FUNCTIONS.Add(14, "XORI");       // XORI
-            OP_FUNCTIONS.Add(15, "COPY");       // LUI
-            OP_FUNCTIONS.Add(35, "LW");         // LW
-            OP_FUNCTIONS.Add(43, "SW");         // SW
+            OP_FUNCTIONS.Add(1, "bltz");        // BLTZ
+            OP_FUNCTIONS.Add(2, "j");           // J
+            OP_FUNCTIONS.Add(4, "beq");         // BEQ
+            OP_FUNCTIONS.Add(5, "bne");         // BNE
+            OP_FUNCTIONS.Add(8, "addi");     // ADDI
+            OP_FUNCTIONS.Add(10, "slti");    // SLTI
+            OP_FUNCTIONS.Add(12, "andi");       // andi
+            OP_FUNCTIONS.Add(13, "ori");        // ori
+            OP_FUNCTIONS.Add(14, "xori");       // xori
+            OP_FUNCTIONS.Add(15, "lui");       // LUI
+            OP_FUNCTIONS.Add(35, "lw");         // lw
+            OP_FUNCTIONS.Add(43, "sw");         // sw
+
+            OP_FUNCTIONS.Add(3, "jal");         // JAL
+            OP_FUNCTIONS.Add(9, "addiu");     // ADDIU
+            OP_FUNCTIONS.Add(32, "lb");     // LB
+            OP_FUNCTIONS.Add(36, "lbu");     // LBU
+            OP_FUNCTIONS.Add(40, "sb");     // SB
 
             var MATH_LOG_SIZES = new Dictionary<string, int>() { { "rs", 5 }, { "rt", 5 }, { "rd", 5 }, { "sh", 5 }, { "fn", 6 } };
             var BLTZ_BEQ_BNE = new Dictionary<string, int>() { { "rs", 5 }, { "rt", 5 }, { "L", 16 } };
-            var J = new Dictionary<string, int>() { { "L", 16 } };
+            var J = new Dictionary<string, int>() { { "L", 26 } };
             var IMM = new Dictionary<string, int>() { { "rs", 5 }, { "rt", 5 }, { "IMM", 16 } };
 
             SIZES.Add("MATH_LOG", MATH_LOG_SIZES);
-            SIZES.Add("BLTZ", BLTZ_BEQ_BNE);
-            SIZES.Add("J", J);
-            SIZES.Add("BEQ", BLTZ_BEQ_BNE);
-            SIZES.Add("BNE", BLTZ_BEQ_BNE);
+            SIZES.Add("bltz", BLTZ_BEQ_BNE);
+            SIZES.Add("j", J);
+            SIZES.Add("beq", BLTZ_BEQ_BNE);
+            SIZES.Add("bne", BLTZ_BEQ_BNE);
 
-            SIZES.Add("MATH_01", IMM);
-            SIZES.Add("MATH_02", IMM);
-            SIZES.Add("ADDI", IMM);
-            SIZES.Add("ORI", IMM);
-            SIZES.Add("XORI", IMM);
+            SIZES.Add("addi", IMM);
+            SIZES.Add("slti", IMM);
+            SIZES.Add("addiu", IMM);
+            SIZES.Add("andi", IMM);
+            SIZES.Add("ori", IMM);
+            SIZES.Add("xori", IMM);
 
-            SIZES.Add("LW", IMM);
-            SIZES.Add("SW", IMM);
+            SIZES.Add("lw", IMM);
+            SIZES.Add("sw", IMM);
 
-            SIZES.Add("COPY", IMM);
+            SIZES.Add("lui", IMM);
 
-            R_FN.Add(8, "JR");
-            R_FN.Add(32, "ADD");
-            R_FN.Add(34, "SUB");
-            R_FN.Add(36, "AND");
-            R_FN.Add(37, "OR");
-            R_FN.Add(38, "XOR");
-            R_FN.Add(39, "NOR");
-            R_FN.Add(42, "SLT");
+            SIZES.Add("lb", IMM);
+            SIZES.Add("lbu", IMM);
+            SIZES.Add("sb", IMM);
+            SIZES.Add("jal", J);
+
+            R_FN.Add(8, "jr");
+            R_FN.Add(32, "add");
+            R_FN.Add(34, "sub");
+            R_FN.Add(36, "and");
+            R_FN.Add(37, "or");
+            R_FN.Add(38, "xor");
+            R_FN.Add(39, "nor");
+            R_FN.Add(42, "slt");
+
+            R_FN.Add(16, "mfhi");
+            R_FN.Add(18, "mflo");
+            R_FN.Add(33, "addu");
+            R_FN.Add(35, "subu");
+            R_FN.Add(24, "mult");
+            R_FN.Add(25, "multu");
+            R_FN.Add(26, "div");
+            R_FN.Add(27, "divu");
+            R_FN.Add(0, "sll");
+            R_FN.Add(2, "srl");
+            R_FN.Add(3, "sra");
+            R_FN.Add(4, "sllv");
+            R_FN.Add(6, "srlv");
+            R_FN.Add(7, "srav");
+            R_FN.Add(12, "syscall");
         }
 
         static string HexToBin(string hex)
         {
+            if (hex.StartsWith("0x"))
+                hex = hex.Substring(2);
+
             return String.Join(String.Empty, hex.Select(c => Convert.ToString(Convert.ToInt32(c.ToString(), 16), 2).PadLeft(4, '0')));
         }
 
