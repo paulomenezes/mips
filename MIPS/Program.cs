@@ -26,11 +26,11 @@ namespace MIPS
                 string _out = Decode(input[i]);
                 Console.WriteLine(_out);
 
-                output += _out + "\n";
+                output += _out + (i < input.Length - 1 ? "\n" : "");
             }
 
-            System.IO.StreamWriter file = new System.IO.StreamWriter("../../saida_2.txt");
-            file.WriteLine(output);
+            System.IO.StreamWriter file = new System.IO.StreamWriter("../../saida.txt");
+            file.Write(output);
             file.Close();
 
             Console.ReadKey();
@@ -41,19 +41,18 @@ namespace MIPS
             string binary = HexToBin(input);
 
             string op = binary.Substring(0, OP_INDEX);
-            int xxx = BinToDec(op);
-            string label = OP_FUNCTIONS[xxx];
+            string label = OP_FUNCTIONS[BinToDec(op)];
 
             int rs = 0;
             int rt = 0;
             int rd = 0;
             int sh = 0;
-            string l = String.Empty;
             int imm = 0;
-            string fn = String.Empty;
 
-            int x = BinToDec(op);
-            string op_name = OP_FUNCTIONS[x];
+            string l = string.Empty;
+            string fn = string.Empty;
+
+            string op_name = OP_FUNCTIONS[BinToDec(op)];
             Dictionary<string, int> funcs = SIZES[op_name];
             int k = OP_INDEX;
             for (int i = 0; i < funcs.Keys.Count; i++)
@@ -114,6 +113,7 @@ namespace MIPS
 
                         break;
                     case "j":
+                    case "jal":
                         switch (name)
                         {
                             case "L":
@@ -185,12 +185,15 @@ namespace MIPS
                     }
                     break;
                 case "bltz":
+                    output = String.Format("{0} ${1}, {2}", fn, rs, l);
+                    break;
                 case "beq":
                 case "bne":
-                    output = String.Format("{0} ${1}, ${2}, ${3}", fn, rs, rt, l);
+                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rs, rt, l);
                     break;
                 case "j":
-                    output = String.Format("{0} ${1}", fn, l);
+                case "jal":
+                    output = String.Format("{0} {1}", fn, l);
                     break;
                 case "lui":
                     output = String.Format("{0} ${1}, {2}", op_name, rt, imm);
@@ -214,20 +217,20 @@ namespace MIPS
             OP_FUNCTIONS.Add(2, "j");           // J
             OP_FUNCTIONS.Add(4, "beq");         // BEQ
             OP_FUNCTIONS.Add(5, "bne");         // BNE
-            OP_FUNCTIONS.Add(8, "addi");     // ADDI
-            OP_FUNCTIONS.Add(10, "slti");    // SLTI
+            OP_FUNCTIONS.Add(8, "addi");        // ADDI
+            OP_FUNCTIONS.Add(10, "slti");       // SLTI
             OP_FUNCTIONS.Add(12, "andi");       // andi
             OP_FUNCTIONS.Add(13, "ori");        // ori
             OP_FUNCTIONS.Add(14, "xori");       // xori
-            OP_FUNCTIONS.Add(15, "lui");       // LUI
+            OP_FUNCTIONS.Add(15, "lui");        // LUI
             OP_FUNCTIONS.Add(35, "lw");         // lw
             OP_FUNCTIONS.Add(43, "sw");         // sw
 
             OP_FUNCTIONS.Add(3, "jal");         // JAL
-            OP_FUNCTIONS.Add(9, "addiu");     // ADDIU
-            OP_FUNCTIONS.Add(32, "lb");     // LB
-            OP_FUNCTIONS.Add(36, "lbu");     // LBU
-            OP_FUNCTIONS.Add(40, "sb");     // SB
+            OP_FUNCTIONS.Add(9, "addiu");       // ADDIU
+            OP_FUNCTIONS.Add(32, "lb");         // LB
+            OP_FUNCTIONS.Add(36, "lbu");        // LBU
+            OP_FUNCTIONS.Add(40, "sb");         // SB
 
             var MATH_LOG_SIZES = new Dictionary<string, int>() { { "rs", 5 }, { "rt", 5 }, { "rd", 5 }, { "sh", 5 }, { "fn", 6 } };
             var BLTZ_BEQ_BNE = new Dictionary<string, int>() { { "rs", 5 }, { "rt", 5 }, { "L", 16 } };
