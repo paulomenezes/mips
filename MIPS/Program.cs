@@ -32,8 +32,6 @@ namespace MIPS
             System.IO.StreamWriter file = new System.IO.StreamWriter("../../saida.txt");
             file.Write(output);
             file.Close();
-
-            Console.ReadKey();
         }
 
         static string Decode(string input)
@@ -185,15 +183,15 @@ namespace MIPS
                     }
                     break;
                 case "bltz":
-                    output = String.Format("{0} ${1}, {2}", fn, rs, l);
+                    output = String.Format("{0} ${1}, {2}", fn, rs, BinToDec(l.ToString()));
                     break;
                 case "beq":
                 case "bne":
-                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rs, rt, l);
+                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rs, rt, BinToDec(l.ToString()));
                     break;
                 case "j":
                 case "jal":
-                    output = String.Format("{0} {1}", fn, l);
+                    output = String.Format("{0} {1}", fn, BinToDec(l.ToString()));
                     break;
                 case "lui":
                     output = String.Format("{0} ${1}, {2}", op_name, rt, imm);
