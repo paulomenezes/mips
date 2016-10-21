@@ -8,6 +8,8 @@ namespace MIPS
 {
     class Program
     {
+        static Dictionary<int, int> REGISTRADORES = new Dictionary<int, int>();
+
         static Dictionary<int, string> OP_FUNCTIONS = new Dictionary<int, string>();
         static Dictionary<string, Dictionary<string, int>> SIZES = new Dictionary<string, Dictionary<string, int>>();
         static int OP_INDEX = 6;
@@ -177,6 +179,66 @@ namespace MIPS
                         case "syscall":
                             output = String.Format("{0}", fn);
                             break;
+                        case "add":
+                            REGISTRADORES[rd] = REGISTRADORES[rs] + REGISTRADORES[rt];
+                            output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
+                        case "sub":
+                            REGISTRADORES[rd] = REGISTRADORES[rs] - REGISTRADORES[rt];
+                            output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
+                        case "slt":
+                            REGISTRADORES[rd] = REGISTRADORES[rs] < REGISTRADORES[rt] ? 1 : 0;
+                            output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
+                        case "addi":
+                            REGISTRADORES[rd] = REGISTRADORES[rs] + rt;
+                            output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
+                        case "slti":
+                            REGISTRADORES[rd] = REGISTRADORES[rs] < rt ? 1 : 0;
+                            output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
+                        case "and":
+                            REGISTRADORES[rd] = REGISTRADORES[rs] & REGISTRADORES[rt];
+                            output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
+                        case "or":
+                            REGISTRADORES[rd] = REGISTRADORES[rs] | REGISTRADORES[rt];
+                            output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
+                        case "xor":
+                            REGISTRADORES[rd] = REGISTRADORES[rs] ^ REGISTRADORES[rt];
+                            output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
+                        case "nor":
+                            REGISTRADORES[rd] = -(REGISTRADORES[rs] | REGISTRADORES[rt]);
+                            output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
+                        case "andi":
+                            REGISTRADORES[rd] = REGISTRADORES[rs] & rt;
+                            output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
+                        case "ori":
+                            REGISTRADORES[rd] = REGISTRADORES[rs] | rt;
+                            output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
+                        case "xori":
+                            REGISTRADORES[rd] = REGISTRADORES[rs] ^ rt;
+                            output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
+                            output += PrintReg();
+                            break;
                         default:
                             output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
                             break;
@@ -196,6 +258,66 @@ namespace MIPS
                 case "lui":
                     output = String.Format("{0} ${1}, {2}", op_name, rt, imm);
                     break;
+                case "add":
+                    REGISTRADORES[rd] = REGISTRADORES[rs] + REGISTRADORES[rt];
+                    output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
+                case "sub":
+                    REGISTRADORES[rd] = REGISTRADORES[rs] - REGISTRADORES[rt];
+                    output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
+                case "slt":
+                    REGISTRADORES[rd] = REGISTRADORES[rs] < REGISTRADORES[rt] ? 1 : 0;
+                    output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
+                case "addi":
+                    REGISTRADORES[rd] = REGISTRADORES[rs] + rt;
+                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
+                case "slti":
+                    REGISTRADORES[rd] = REGISTRADORES[rs] < rt ? 1 : 0;
+                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
+                case "and":
+                    REGISTRADORES[rd] = REGISTRADORES[rs] & REGISTRADORES[rt];
+                    output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
+                case "or":
+                    REGISTRADORES[rd] = REGISTRADORES[rs] | REGISTRADORES[rt];
+                    output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
+                case "xor":
+                    REGISTRADORES[rd] = REGISTRADORES[rs] ^ REGISTRADORES[rt];
+                    output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
+                case "nor":
+                    REGISTRADORES[rd] = -(REGISTRADORES[rs] | REGISTRADORES[rt]);
+                    output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
+                case "andi":
+                    REGISTRADORES[rd] = REGISTRADORES[rs] & rt;
+                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
+                case "ori":
+                    REGISTRADORES[rd] = REGISTRADORES[rs] | rt;
+                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
+                case "xori":
+                    REGISTRADORES[rd] = REGISTRADORES[rs] ^ rt;
+                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
+                    output += PrintReg();
+                    break;
                 default:
                     if (label.Equals("lw") || label.Equals("sw") ||
                         label.Equals("lb") || label.Equals("lbu") || label.Equals("sb"))
@@ -208,8 +330,24 @@ namespace MIPS
             return output;
         }
 
+        static string PrintReg()
+        {
+            string line = "";
+            for (int i = 0; i < REGISTRADORES.Count; i++)
+            {
+                line += "$" + i + "=" + REGISTRADORES[i] + ";";
+            }
+            
+            return "\n" + line;
+        }
+
         static void StartDict()
         {
+            for (int i = 0; i < 32; i++)
+            {
+                REGISTRADORES.Add(i, 0);
+            }
+
             OP_FUNCTIONS.Add(0, "MATH_LOG");    // JR, ADD, SUB, SLT, AND, OR, XOR, NOR
             OP_FUNCTIONS.Add(1, "bltz");        // BLTZ
             OP_FUNCTIONS.Add(2, "j");           // J
