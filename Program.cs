@@ -49,8 +49,6 @@ namespace MIPS
             System.IO.StreamWriter file = new System.IO.StreamWriter("../../saida.txt");
             file.Write(output);
             file.Close();
-
-            Console.ReadKey();
         }
 
         static string Decode(string input)
@@ -143,15 +141,12 @@ namespace MIPS
                         switch (name)
                         {
                             case "rs":
-                                Console.WriteLine(binary.Substring(k, size));
                                 rs = BinToDec(binary.Substring(k, size));
                                 break;
                             case "rt":
-                                Console.WriteLine(binary.Substring(k, size));
                                 rt = BinToDec(binary.Substring(k, size));
                                 break;
                             case "IMM":
-                                Console.WriteLine(binary.Substring(k, size));
                                 imm = BinToDec(binary.Substring(k, size));
                                 break;
                         }
@@ -368,7 +363,6 @@ namespace MIPS
                     if (!MEMORIA.ContainsKey(imm + REGISTRADORES[rs]))
                         MEMORIA.Add(imm + REGISTRADORES[rs], "0");
 
-                    Console.WriteLine(MEMORIA[imm + REGISTRADORES[rs]]);
                     REGISTRADORES[rt] = BinToDec(MEMORIA[imm + REGISTRADORES[rs]], 8);
                     output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
                     break;
