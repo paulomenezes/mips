@@ -9,12 +9,15 @@ namespace MIPS
     class Program
     {
         static Dictionary<int, int> REGISTRADORES = new Dictionary<int, int>();
+        static Dictionary<int, int> MEMORIA = new Dictionary<int, int>();
 
         static Dictionary<int, string> OP_FUNCTIONS = new Dictionary<int, string>();
         static Dictionary<string, Dictionary<string, int>> SIZES = new Dictionary<string, Dictionary<string, int>>();
         static int OP_INDEX = 6;
 
         static Dictionary<int, string> R_FN = new Dictionary<int, string>();
+
+        static int INDEX = 0;
 
         static void Main(string[] args)
         {
@@ -23,17 +26,19 @@ namespace MIPS
             string[] input = System.IO.File.ReadAllLines("../../entrada.txt");
             string output = String.Empty;
 
-            for (int i = 0; i < input.Length; i++)
+            for (INDEX = 0; INDEX < input.Length; INDEX++)
             {
-                string _out = Decode(input[i]);
+                string _out = Decode(input[INDEX]);
                 Console.WriteLine(_out);
 
-                output += _out + (i < input.Length - 1 ? "\n" : "");
+                output += _out + (INDEX < input.Length - 1 ? "\n" : "");
             }
 
             System.IO.StreamWriter file = new System.IO.StreamWriter("../../saida.txt");
             file.Write(output);
             file.Close();
+
+            Console.ReadKey();
         }
 
         static string Decode(string input)
@@ -122,6 +127,24 @@ namespace MIPS
                         }
 
                         break;
+                    case "sw":
+                        switch (name)
+                        {
+                            case "rs":
+                                Console.WriteLine(binary.Substring(k, size));
+                                rs = BinToDec(binary.Substring(k, size));
+                                break;
+                            case "rt":
+                                Console.WriteLine(binary.Substring(k, size));
+                                rt = BinToDec(binary.Substring(k, size));
+                                break;
+                            case "IMM":
+                                Console.WriteLine(binary.Substring(k, size));
+                                imm = BinToDec(binary.Substring(k, size));
+                                break;
+                        }
+
+                        break;
                     default:
                         switch (name)
                         {
@@ -182,62 +205,50 @@ namespace MIPS
                         case "add":
                             REGISTRADORES[rd] = REGISTRADORES[rs] + REGISTRADORES[rt];
                             output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         case "sub":
                             REGISTRADORES[rd] = REGISTRADORES[rs] - REGISTRADORES[rt];
                             output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         case "slt":
                             REGISTRADORES[rd] = REGISTRADORES[rs] < REGISTRADORES[rt] ? 1 : 0;
                             output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         case "addi":
                             REGISTRADORES[rd] = REGISTRADORES[rs] + rt;
                             output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         case "slti":
                             REGISTRADORES[rd] = REGISTRADORES[rs] < rt ? 1 : 0;
                             output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         case "and":
                             REGISTRADORES[rd] = REGISTRADORES[rs] & REGISTRADORES[rt];
                             output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         case "or":
                             REGISTRADORES[rd] = REGISTRADORES[rs] | REGISTRADORES[rt];
                             output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         case "xor":
                             REGISTRADORES[rd] = REGISTRADORES[rs] ^ REGISTRADORES[rt];
                             output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         case "nor":
                             REGISTRADORES[rd] = -(REGISTRADORES[rs] | REGISTRADORES[rt]);
                             output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         case "andi":
                             REGISTRADORES[rd] = REGISTRADORES[rs] & rt;
                             output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         case "ori":
                             REGISTRADORES[rd] = REGISTRADORES[rs] | rt;
                             output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         case "xori":
                             REGISTRADORES[rd] = REGISTRADORES[rs] ^ rt;
                             output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
-                            output += PrintReg();
                             break;
                         default:
                             output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
@@ -248,11 +259,25 @@ namespace MIPS
                     output = String.Format("{0} ${1}, {2}", fn, rs, BinToDec(l.ToString()));
                     break;
                 case "beq":
+                    if (REGISTRADORES[rs] == REGISTRADORES[rt])
+                        INDEX += BinToDec(l.ToString());
+
+                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rs, rt, BinToDec(l.ToString()));
+                    break;
                 case "bne":
+                    if (REGISTRADORES[rs] != REGISTRADORES[rt])
+                        INDEX += BinToDec(l.ToString());
+
                     output = String.Format("{0} ${1}, ${2}, {3}", fn, rs, rt, BinToDec(l.ToString()));
                     break;
                 case "j":
+                    INDEX = REGISTRADORES[BinToDec(l.ToString())] - 1;
+
+                    output = String.Format("{0} {1}", fn, BinToDec(l.ToString()));
+                    break;
                 case "jal":
+                    INDEX = BinToDec(l.ToString()) - 1;
+
                     output = String.Format("{0} {1}", fn, BinToDec(l.ToString()));
                     break;
                 case "lui":
@@ -261,71 +286,94 @@ namespace MIPS
                 case "add":
                     REGISTRADORES[rd] = REGISTRADORES[rs] + REGISTRADORES[rt];
                     output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                    output += PrintReg();
                     break;
                 case "sub":
                     REGISTRADORES[rd] = REGISTRADORES[rs] - REGISTRADORES[rt];
                     output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                    output += PrintReg();
                     break;
                 case "slt":
                     REGISTRADORES[rd] = REGISTRADORES[rs] < REGISTRADORES[rt] ? 1 : 0;
                     output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                    output += PrintReg();
                     break;
                 case "addi":
-                    REGISTRADORES[rd] = REGISTRADORES[rs] + rt;
-                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
-                    output += PrintReg();
+                    REGISTRADORES[rt] = REGISTRADORES[rs] + imm;
+                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rt, rs, imm);
                     break;
                 case "slti":
                     REGISTRADORES[rd] = REGISTRADORES[rs] < rt ? 1 : 0;
                     output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
-                    output += PrintReg();
                     break;
                 case "and":
                     REGISTRADORES[rd] = REGISTRADORES[rs] & REGISTRADORES[rt];
                     output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                    output += PrintReg();
                     break;
                 case "or":
                     REGISTRADORES[rd] = REGISTRADORES[rs] | REGISTRADORES[rt];
                     output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                    output += PrintReg();
                     break;
                 case "xor":
                     REGISTRADORES[rd] = REGISTRADORES[rs] ^ REGISTRADORES[rt];
                     output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                    output += PrintReg();
                     break;
                 case "nor":
                     REGISTRADORES[rd] = -(REGISTRADORES[rs] | REGISTRADORES[rt]);
                     output = String.Format("{0} ${1}, ${2}, ${3}", fn, rd, rs, rt);
-                    output += PrintReg();
                     break;
                 case "andi":
                     REGISTRADORES[rd] = REGISTRADORES[rs] & rt;
                     output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
-                    output += PrintReg();
                     break;
                 case "ori":
                     REGISTRADORES[rd] = REGISTRADORES[rs] | rt;
                     output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
-                    output += PrintReg();
                     break;
                 case "xori":
                     REGISTRADORES[rd] = REGISTRADORES[rs] ^ rt;
                     output = String.Format("{0} ${1}, ${2}, {3}", fn, rd, rs, rt);
-                    output += PrintReg();
+                    break;
+                case "sw":
+                    if (!MEMORIA.ContainsKey(imm + REGISTRADORES[rs]))
+                        MEMORIA.Add(imm + REGISTRADORES[rs], REGISTRADORES[rt]);
+                    else
+                        MEMORIA[imm + REGISTRADORES[rs]] = REGISTRADORES[rt];
+
+                    output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
+                    break;
+                case "sb":
+                    if (!MEMORIA.ContainsKey(imm + REGISTRADORES[rs]))
+                        MEMORIA.Add(imm + REGISTRADORES[rs], REGISTRADORES[rt]);
+                    else
+                        MEMORIA[imm + REGISTRADORES[rs]] = REGISTRADORES[rt];
+
+                    output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
+                    break;
+                case "lb":
+                    if (!MEMORIA.ContainsKey(imm + REGISTRADORES[rs]))
+                        MEMORIA.Add(imm + REGISTRADORES[rs], 0);
+
+                    REGISTRADORES[rt] = MEMORIA[imm + REGISTRADORES[rs]];
+                    output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
+                    break;
+                case "lw":
+                    if (!MEMORIA.ContainsKey(imm + REGISTRADORES[rs]))
+                        MEMORIA.Add(imm + REGISTRADORES[rs], 0);
+
+                    REGISTRADORES[rt] = MEMORIA[imm + REGISTRADORES[rs]];
+                    output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
+                    break;
+                case "lbu":
+                    if (!MEMORIA.ContainsKey(imm + REGISTRADORES[rs]))
+                        MEMORIA.Add(imm + REGISTRADORES[rs], 0);
+
+                    REGISTRADORES[rt] = MEMORIA[imm + REGISTRADORES[rs]];
+                    output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
                     break;
                 default:
-                    if (label.Equals("lw") || label.Equals("sw") ||
-                        label.Equals("lb") || label.Equals("lbu") || label.Equals("sb"))
-                        output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
-                    else
-                        output = String.Format("{0} ${1}, ${2}, {3}", fn, rt, rs, imm);
+                    output = String.Format("{0} ${1}, ${2}, {3}", fn, rt, rs, imm);
                     break;
             }
+
+            output += PrintReg();
 
             return output;
         }
@@ -338,7 +386,7 @@ namespace MIPS
                 line += "$" + i + "=" + REGISTRADORES[i] + ";";
             }
             
-            return "\n" + line;
+            return /*" - " + INDEX + */"\n" + line;
         }
 
         static void StartDict()
@@ -346,6 +394,7 @@ namespace MIPS
             for (int i = 0; i < 32; i++)
             {
                 REGISTRADORES.Add(i, 0);
+                MEMORIA.Add(i, 0);
             }
 
             OP_FUNCTIONS.Add(0, "MATH_LOG");    // JR, ADD, SUB, SLT, AND, OR, XOR, NOR
@@ -388,11 +437,11 @@ namespace MIPS
 
             SIZES.Add("lw", IMM);
             SIZES.Add("sw", IMM);
+            SIZES.Add("lb", IMM);
+            SIZES.Add("lbu", IMM);
 
             SIZES.Add("lui", IMM);
 
-            SIZES.Add("lb", IMM);
-            SIZES.Add("lbu", IMM);
             SIZES.Add("sb", IMM);
             SIZES.Add("jal", J);
 
@@ -432,7 +481,11 @@ namespace MIPS
 
         static int BinToDec(string binary)
         {
-            return Convert.ToInt32(binary, 2);
+            int value = Convert.ToInt32(binary, 2);
+            if (value >= 65535)
+                return value - 65536;
+            else
+                return value;
         }
     }
 }
