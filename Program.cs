@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ namespace MIPS
     class Program
     {
         static Dictionary<int, int> REGISTRADORES = new Dictionary<int, int>();
-        static Dictionary<int, int> MEMORIA = new Dictionary<int, int>();
+        static Dictionary<int, string> MEMORIA = new Dictionary<int, string>();
 
         static Dictionary<int, string> OP_FUNCTIONS = new Dictionary<int, string>();
         static Dictionary<string, Dictionary<string, int>> SIZES = new Dictionary<string, Dictionary<string, int>>();
@@ -25,6 +26,17 @@ namespace MIPS
 
             string[] input = System.IO.File.ReadAllLines("../../entrada.txt");
             string output = String.Empty;
+
+            List<string> translated = new List<string>();
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                string binary = HexToBin(input[i]);
+                string op = binary.Substring(0, OP_INDEX);
+                string label = OP_FUNCTIONS[BinToDec(op)];
+
+                translated.Add(label);
+            }
 
             for (INDEX = 0; INDEX < input.Length; INDEX++)
             {
@@ -185,6 +197,7 @@ namespace MIPS
                             output = String.Format("{0} ${1}, ${2}", fn, rs, rt);
                             break;
                         case "jr":
+                            INDEX = REGISTRADORES[rs] / 4 - 1;
                             output = String.Format("{0} ${1}", fn, rs);
                             break;
                         case "sll":
@@ -256,6 +269,9 @@ namespace MIPS
                     }
                     break;
                 case "bltz":
+                    if (REGISTRADORES[rs] < 0)
+                        INDEX += BinToDec(l.ToString());
+
                     output = String.Format("{0} ${1}, {2}", fn, rs, BinToDec(l.ToString()));
                     break;
                 case "beq":
@@ -271,11 +287,12 @@ namespace MIPS
                     output = String.Format("{0} ${1}, ${2}, {3}", fn, rs, rt, BinToDec(l.ToString()));
                     break;
                 case "j":
-                    INDEX = REGISTRADORES[BinToDec(l.ToString())] - 1;
+                    INDEX = BinToDec(l.ToString()) - 1;
 
                     output = String.Format("{0} {1}", fn, BinToDec(l.ToString()));
                     break;
                 case "jal":
+                    REGISTRADORES[31] = INDEX * 4 + 4;
                     INDEX = BinToDec(l.ToString()) - 1;
 
                     output = String.Format("{0} {1}", fn, BinToDec(l.ToString()));
@@ -333,39 +350,40 @@ namespace MIPS
                     break;
                 case "sw":
                     if (!MEMORIA.ContainsKey(imm + REGISTRADORES[rs]))
-                        MEMORIA.Add(imm + REGISTRADORES[rs], REGISTRADORES[rt]);
+                        MEMORIA.Add(imm + REGISTRADORES[rs], DecToBin(REGISTRADORES[rt]));
                     else
-                        MEMORIA[imm + REGISTRADORES[rs]] = REGISTRADORES[rt];
+                        MEMORIA[imm + REGISTRADORES[rs]] = DecToBin(REGISTRADORES[rt]);
 
                     output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
                     break;
                 case "sb":
                     if (!MEMORIA.ContainsKey(imm + REGISTRADORES[rs]))
-                        MEMORIA.Add(imm + REGISTRADORES[rs], REGISTRADORES[rt]);
+                        MEMORIA.Add(imm + REGISTRADORES[rs], DecToBin(REGISTRADORES[rt]));
                     else
-                        MEMORIA[imm + REGISTRADORES[rs]] = REGISTRADORES[rt];
+                        MEMORIA[imm + REGISTRADORES[rs]] = DecToBin(REGISTRADORES[rt]);
 
                     output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
                     break;
                 case "lb":
                     if (!MEMORIA.ContainsKey(imm + REGISTRADORES[rs]))
-                        MEMORIA.Add(imm + REGISTRADORES[rs], 0);
+                        MEMORIA.Add(imm + REGISTRADORES[rs], "0");
 
-                    REGISTRADORES[rt] = MEMORIA[imm + REGISTRADORES[rs]];
+                    Console.WriteLine(MEMORIA[imm + REGISTRADORES[rs]]);
+                    REGISTRADORES[rt] = BinToDec(MEMORIA[imm + REGISTRADORES[rs]], 8);
                     output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
                     break;
                 case "lw":
                     if (!MEMORIA.ContainsKey(imm + REGISTRADORES[rs]))
-                        MEMORIA.Add(imm + REGISTRADORES[rs], 0);
+                        MEMORIA.Add(imm + REGISTRADORES[rs], "0");
 
-                    REGISTRADORES[rt] = MEMORIA[imm + REGISTRADORES[rs]];
+                    REGISTRADORES[rt] = BinToDec(MEMORIA[imm + REGISTRADORES[rs]]);
                     output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
                     break;
                 case "lbu":
                     if (!MEMORIA.ContainsKey(imm + REGISTRADORES[rs]))
-                        MEMORIA.Add(imm + REGISTRADORES[rs], 0);
+                        MEMORIA.Add(imm + REGISTRADORES[rs], "0");
 
-                    REGISTRADORES[rt] = MEMORIA[imm + REGISTRADORES[rs]];
+                    REGISTRADORES[rt] = BinToDec(MEMORIA[imm + REGISTRADORES[rs]], 8, true);
                     output = String.Format("{0} ${1}, {2}(${3})", fn, rt, imm, rs);
                     break;
                 default:
@@ -394,7 +412,7 @@ namespace MIPS
             for (int i = 0; i < 32; i++)
             {
                 REGISTRADORES.Add(i, 0);
-                MEMORIA.Add(i, 0);
+                MEMORIA.Add(i, "0");
             }
 
             OP_FUNCTIONS.Add(0, "MATH_LOG");    // JR, ADD, SUB, SLT, AND, OR, XOR, NOR
@@ -478,14 +496,28 @@ namespace MIPS
 
             return String.Join(String.Empty, hex.Select(c => Convert.ToString(Convert.ToInt32(c.ToString(), 16), 2).PadLeft(4, '0')));
         }
-
-        static int BinToDec(string binary)
+        
+        static int BinToDec(string binary, int max = 16, bool unsigned = false)
         {
-            int value = Convert.ToInt32(binary, 2);
-            if (value >= 65535)
-                return value - 65536;
-            else
+            int value1 = Convert.ToInt32(binary, 2);
+            int value = Convert.ToInt32(binary.Length > max ? binary.Substring(binary.Length - max, max) : binary, 2);
+
+            if (unsigned)
+            {
                 return value;
+            }
+            else
+            {
+                if (value >= Math.Pow(2, max) - 1)
+                    return value - (int)Math.Pow(2, max);
+                else
+                    return value;
+            }
+        }
+
+        static string DecToBin(int dec)
+        {
+            return Convert.ToString(dec, 2);
         }
     }
 }
